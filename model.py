@@ -52,20 +52,17 @@ class Attention(keras.layers.Layer):
 
         outputs = tf.reshape(outputs, [-1, 1, max_len])  # (batch_size, 1, max_len)
 
-        # mask计算，因为后续需要进行softmax计算
         if self.supports_masking:
-            # 最后一维增加max_len长度
             mask = tf.sequence_mask(hist_len, max_len)  # (batch_size, 1, max_len)
-            padding = tf.ones_like(outputs) * (-1e12)  # 经过softmax之后为0
+            padding = tf.ones_like(outputs) * (-1e12)  
             outputs = tf.where(mask, outputs, padding)
 
         # 对outputs进行scale
         outputs = outputs / (hidden_units ** 0.5)
-        outputs = K.softmax(outputs)  # (batch_size, 1, max_len)
+        outputs = K.softmax(outputs)  
 
-        # attention权重计算好了，然后进行加权
-        outputs = tf.matmul(outputs,
-                            hist_emb)  # (batch_size, 1, max_len) * (batch_size, max_len, hidden_units) = > (batch_size, 1, hidden_units)
+
+        outputs = tf.matmul(outputs, hist_emb)  # batch_size, 1, hidden_units)
 
         outputs = tf.squeeze(outputs)  # (batch_size, hidden_units)
 
@@ -104,19 +101,16 @@ def din(item_count, cate_count, hidden_units=128):
     hist_item_seq = keras.layers.Input(shape=(None,), name="hist_item_seq", dtype="int32")  # 点击序列
     hist_cate_seq = keras.layers.Input(shape=(None,), name="hist_cate_seq", dtype="int32")  # 点击序列对应的类别序列
 
-    hist_len = keras.layers.Input(shape=(1,), name='hist_len', dtype="int32")  # 序列本来的长度，方便后续mask
+    hist_len = keras.layers.Input(shape=(1,), name='hist_len', dtype="int32")  # 序列本来的长度
 
-    # 定义商品id的embedding矩阵
     item_emb = keras.layers.Embedding(input_dim=item_count,
                                       output_dim=hidden_units // 2,
                                       embeddings_initializer=keras.initializers.RandomNormal(mean=0.0, stddev=1e-4,
                                                                                              seed=seed))
-    # 定义商品类别id的embedding矩阵
     cate_emb = keras.layers.Embedding(input_dim=cate_count,
                                       output_dim=hidden_units // 2,
                                       embeddings_initializer=keras.initializers.RandomNormal(mean=0.0, stddev=1e-4,
                                                                                              seed=seed))
-    # 定义商品id的bias embdding矩阵
     item_b = keras.layers.Embedding(input_dim=item_count, output_dim=1,
                                     embeddings_initializer=keras.initializers.Constant(0.0))
 
@@ -141,21 +135,16 @@ def din(item_count, cate_count, hidden_units=128):
     # 构建点击序列与候选的attention关系
     din_attention = Attention()([i_emb, hist_emb, hist_len])  # (batch_size, hidden_units)
     din_attention = keras.layers.Lambda(lambda x: tf.reshape(x, [-1, hidden_units]))(din_attention)
-    print("din_attention:", din_attention.get_shape())
 
     # keras.layers.BatchNormalization实现暂时有坑，借用paddle相关代码实现
     din_attention_fc = keras.layers.Dense(63802)(din_attention)  # (batch_size, item_count + cate_count)
     # item_count:  63001   cate_count:  801         hidden_units:  128   (batch_size, item_count + cate_count + hidden_units)
     din_item = keras.layers.Lambda(lambda x: K.concatenate([x[0], x[1]], axis=1))([i_emb, din_attention_fc])
-    print("din_item:", din_item.get_shape())
-
     din_item = share_weights()(din_item)  # (batch_size, 1)
 
-    # 在经过softmax层之前，添加bias
     print("logits:", din_item, target_item_bias_emb)
     logits = keras.layers.Add()([din_item, target_item_bias_emb])
 
-    # 由于共享权重，因此这里定义预测函数
     label_model = keras.models.Model(inputs=[hist_item_seq, hist_cate_seq, target_item, target_cate, hist_len], outputs=[logits])
 
     train_model = keras.models.Model(inputs=[hist_item_seq, hist_cate_seq, target_item, target_cate, hist_len, label],
@@ -163,10 +152,7 @@ def din(item_count, cate_count, hidden_units=128):
 
     # 计算损失函数
     loss = K.binary_crossentropy(target=label, output=logits, from_logits=True)
-
-    # 自定义损失函数，需要自己添加
     train_model.add_loss(loss)
-
     train_model.compile(optimizer=keras.optimizers.SGD(1e-3), metrics=["accuracy"])
 
     return train_model, label_model
