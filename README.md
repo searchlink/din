@@ -1,4 +1,6 @@
 # 基于keras的Deep Interest Network实现
+欢迎star，后续会有更多的nlp和推荐的代码实现，同时关注我的知乎(https://www.zhihu.com/people/wang-wei-88-42-76/activities)
+
 参考阿里的论文Deep Interest Network for Click-Through Rate Prediction(https://arxiv.org/abs/1706.06978) 
 
 实现过程参考了了如下代码库：
@@ -31,3 +33,20 @@ Epoch 9/10
 40758/40762 [============================>.] - ETA: 0s - loss: 0.5651
 ```
 经过调整优化算法和学习参数之后，loss下降回归正常。
+
+```
+Epoch 1/10
+40761/40762 [============================>.] - ETA: 0s - loss: 0.6021
+
+Epoch 2/10
+40761/40762 [============================>.] - ETA: 0s - loss: 0.5349
+
+Epoch 3/10
+40760/40762 [============================>.] - ETA: 0s - loss: 0.5302
+
+Epoch 4/10
+40759/40762 [============================>.] - ETA: 0s - loss: 0.5280
+
+Consider using a TensorFlow optimizer from `tf.train`.
+acc: 0.7824, best acc: 0.7824
+```
