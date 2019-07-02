@@ -1,5 +1,5 @@
 # 基于keras的Deep Interest Network实现
-欢迎star，后续会有更多的nlp和推荐的代码实现，同时关注我的知乎(https://www.zhihu.com/people/wang-wei-88-42-76/activities)
+欢迎star，后续会有更多的nlp和推荐的代码实现，同时关注我的知乎(https://zhuanlan.zhihu.com/skydm)
 
 参考阿里的论文Deep Interest Network for Click-Through Rate Prediction(https://arxiv.org/abs/1706.06978) 
 
